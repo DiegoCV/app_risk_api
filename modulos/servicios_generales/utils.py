@@ -18,5 +18,5 @@ def get_gerente_by_id(request):
 	return Gerente.objects.get(gerente_id = gerente_id)
 
 def get_gerente_id(request):
-	gerente_id = decodificar_jwt_token(request)["gerente_id"]
-	return Gerente.objects.get(gerente_id = gerente_id)
+	return decodificar_jwt_token(request)["gerente_id"]
+	

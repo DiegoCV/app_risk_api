@@ -4,8 +4,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import Gerente
 from .models import Proyecto
 from .models import Categoria
+from .models import SubCategoria
+from .models import Riesgo
 
-""" 
+"""
 //////////////////////////////////////////////////////
     Serializers relacionados con los tokens
 //////////////////////////////////////////////////////
@@ -18,29 +20,37 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['gerente_id'] = user.id
         return token
 
-
-""" 
+class SesionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Gerente
+        fields = ("gerente_correo", "gerente_password")
+"""
 //////////////////////////////////////////////////////
     Serializers relacionados con el modelo Gerente
 //////////////////////////////////////////////////////
 """
-class GerenteSerializer(serializers.HyperlinkedModelSerializer):  	
+class GerenteSerializer(serializers.HyperlinkedModelSerializer):
     gerente_id = serializers.IntegerField(read_only=True)
     class Meta:
         model = Gerente
         fields = ("gerente_id", "gerente_nombre", "gerente_usuario", "gerente_correo", "gerente_password", "gerente_fecha_creacion")
 
-class GerenteSerializerUtil(serializers.HyperlinkedModelSerializer):    
+class GerenteSerializerUtil(serializers.HyperlinkedModelSerializer):
     gerente_id = serializers.IntegerField(read_only=True)
     class Meta:
         model = Gerente
         fields = ("gerente_id", "gerente_nombre", "gerente_usuario", "gerente_correo", "gerente_password", "gerente_fecha_creacion")
 
-""" 
+"""
 //////////////////////////////////////////////////////
     Serializers relacionados con el modelo Proyecto
 //////////////////////////////////////////////////////
 """
+class ProyectoSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Proyecto
+        fields = ("proyecto_nombre", "proyecto_objetivo", "proyecto_alcance", "proyecto_descripcion", "proyecto_presupuesto", "proyecto_fecha_inicio", "proyecto_fecha_finl", "proyecto_evaluacion_general", "proyecto_evaluacion")
+
 class ProyectoSerializerInsert(serializers.HyperlinkedModelSerializer):
     proyecto_fecha_inicio = fields.DateField(input_formats=['%Y-%m-%d'])
     proyecto_fecha_finl = fields.DateField(input_formats=['%Y-%m-%d'])
@@ -59,13 +69,75 @@ class ProyectoSerializerUpdate(serializers.HyperlinkedModelSerializer):
         model = Proyecto
         fields = ("proyecto_objetivo", "proyecto_alcance", "proyecto_descripcion", "proyecto_presupuesto", "proyecto_fecha_inicio", "proyecto_fecha_finl", "gerente")
 
-
-
-
-
-
-
-class SesionSerializer(serializers.HyperlinkedModelSerializer):  
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de Categoria
+//////////////////////////////////////////////////////
+"""
+class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
+    categoria_id = serializers.IntegerField(read_only=True)
     class Meta:
-        model = Gerente
-        fields = ("gerente_correo", "gerente_password")
+        model = Categoria
+        fields = ("categoria_id", "categoria_nombre", "categoria_descripcion")
+
+    def create(self, validated_data, gerente_id):
+        gerente = Gerente.objects.get(gerente_id = gerente_id)
+        validated_data['gerente'] = gerente
+        Categoria.objects.create(**validated_data)
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de SubCategoria
+//////////////////////////////////////////////////////
+"""
+class SubCategoriaSerializer(serializers.HyperlinkedModelSerializer):
+    sub_categoria_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = SubCategoria
+        fields = ("sub_categoria_id", "sub_categoria_nombre", "sub_categoria_descripcion")
+
+    def create(self, validated_data):
+        categoria_id = validated_data['categoria_id']
+        categoria = Categoria.objects.get(categoria_id = categoria_id)
+        validated_data['categoria'] = categoria
+        SubCategoria.objects.create(**validated_data)
+
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de Riesgo
+//////////////////////////////////////////////////////
+"""
+class RiesgoSerializer(serializers.HyperlinkedModelSerializer):
+    riesgo_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Riesgo
+        fields = ("riesgo_id", "riesgo_nombre", "riesgo_causa", "riesgo_evento", "riesgo_efecto", "riesgo_tipo", "riesgo_prom_evaluacion")
+
+    def create(self, validated_data):
+        sub_categoria_id = validated_data['sub_categoria_id']
+        sub_categoria = SubCategoria.objects.get(sub_categoria_id = sub_categoria_id)
+        validated_data['sub_categoria'] = sub_categoria
+        Riesgo.objects.create(**validated_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#d
