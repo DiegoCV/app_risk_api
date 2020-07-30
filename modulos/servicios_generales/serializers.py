@@ -6,6 +6,8 @@ from .models import Proyecto
 from .models import Categoria
 from .models import SubCategoria
 from .models import Riesgo
+from .models import Respuesta
+from .models import RespuestaHasRiesgo
 
 """
 //////////////////////////////////////////////////////
@@ -103,6 +105,11 @@ class SubCategoriaSerializer(serializers.HyperlinkedModelSerializer):
         SubCategoria.objects.create(**validated_data)
 
 
+class SubCategoriaSerializerUpdate(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = SubCategoria
+        fields = ("sub_categoria_nombre", "sub_categoria_descripcion")
+
 """
 //////////////////////////////////////////////////////
     Serializers relacionados con el modelo de Riesgo
@@ -122,6 +129,23 @@ class RiesgoSerializer(serializers.HyperlinkedModelSerializer):
         Riesgo.objects.create(**validated_data)
 
 
+class RiesgoSerializerUpdate(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Riesgo
+        fields = ("riesgo_nombre", "riesgo_causa", "riesgo_evento", "riesgo_efecto", "riesgo_tipo", "riesgo_prom_evaluacion")
+
+  
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de Respuesta
+//////////////////////////////////////////////////////
+"""
+class RespuestaSerializer(serializers.HyperlinkedModelSerializer):
+    respuesta_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Respuesta
+        fields = ("respuesta_id", "respuesta_nombre", "respuesta_descripcion", "respuesta_costo")
 
 
 
