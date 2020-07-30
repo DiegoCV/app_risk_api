@@ -24,6 +24,7 @@ urlpatterns = [
     path('categoria/actualizar/<int:categoria_id>/', views.ActualizarCategoria.as_view()),
 # urls de SubCategorias
     path('sub_categoria/', views.RegistrarSubCategoria.as_view()),
+    path('sub_categoria/listar/', views.ListarALLSubCategorias.as_view()),
     path('sub_categoria/listar/categoria/<int:categoria_id>/', views.ListarSubCategorias.as_view()),
     path('sub_categoria/actualizar/<int:pk_sub_categoria>/', views.ActualizarSubCategoria.as_view()),
     path('sub_categoria/eliminar/<int:pk_sub_categoria>/', views.EliminarSubCategoria.as_view()),
@@ -32,7 +33,12 @@ urlpatterns = [
     path('riesgo/listar/sub_categoria/<int:sub_categoria_id>/', views.ListarRiesgosPorSubcategoria.as_view()),
     path('riesgo/actualizar/<int:riesgo_id>/', views.ActualizarRiesgo.as_view()),
 # urls de respuestas
-    path('respuesta/riesgo/<int:riesgo_id>/', views.RegistrarRespuesta.as_view()),
+    path('respuesta/', views.RegistrarRespuesta.as_view()),
+    path('respuesta/riesgo/<int:riesgo_id>/', views.RegistrarRespuestaRiesgo.as_view()),
+    path('respuesta/actualizar/<int:respuesta_id>/', views.ActualizarRespuesta.as_view()),
+    path('respuesta/eliminar/<int:respuesta_id>/', views.EliminarRespuesta.as_view()),
+    path('respuesta/asociar/riesgo/<int:riesgo_id>/', views.AsociarRespuestaRiesgo.as_view()),
+    path('respuesta/desasociar/riesgo/<int:respuesta_id>/', views.DesasociarRespuesta.as_view()),
 
 ]
 

@@ -30,6 +30,8 @@ from .serializers import SubCategoriaSerializerUpdate
 from .serializers import MyTokenObtainPairSerializer
 from .serializers import RiesgoSerializer
 from .serializers import RiesgoSerializerUpdate
+from .serializers import RespuestaSerializer
+from .serializers import RespuestaSerializerInsert
 
 from .utils import decodificar_jwt_token
 from .utils import get_gerente_by_username
@@ -246,6 +248,19 @@ class ListarSubCategorias(APIView):
             raise Http404
 
 
+class ListarALLSubCategorias(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        try:
+            gerente_id = get_gerente_id(request)
+            sub_categorias = SubCategoria.objects.raw("SELECT sc.sub_categoria_id, sc.sub_categoria_nombre, sc.sub_categoria_descripcion FROM sub_categoria sc INNER JOIN categoria c ON sc.categoria_id = c.categoria_id WHERE c.gerente_id = %s", [gerente_id])
+            serializer = SubCategoriaSerializer(sub_categorias, many=True)
+            return Response(serializer.data)
+        except Categoria.DoesNotExist:
+            raise Http404
+
 class ActualizarSubCategoria(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -339,7 +354,7 @@ class ActualizarRiesgo(APIView):
     def get_object(self, riesgo_id, gerente_id):
         try:
             riesgo = Riesgo.objects.raw("SELECT r.riesgo_id, r.riesgo_nombre, r.riesgo_causa, r.riesgo_evento, r.riesgo_efecto, r.riesgo_tipo, r.riesgo_prom_evaluacion FROM riesgo r INNER JOIN sub_categoria sc  ON r.sub_categoria_id = sc.sub_categoria_id INNER JOIN categoria c  ON sc.categoria_id = c.categoria_id INNER JOIN gerente g ON c.gerente_id = g.gerente_id WHERE r.riesgo_id = %s AND g.gerente_id = %s", [riesgo_id, gerente_id])[0]
-            return categoria
+            return riesgo
         except IndexError:
             return False
         except Riesgo.DoesNotExist:
@@ -364,8 +379,19 @@ class ActualizarRiesgo(APIView):
     HISTORIA DE USUARIO N° 4
 /////////////////////////////////////////////////////////////////////////////
 """
-
 class RegistrarRespuesta(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        serializer = RespuestaSerializerInsert(data=request.data)
+        if serializer.is_valid():
+            gerente_id = get_gerente_id(request)
+            respuesta = serializer.create(request.data, gerente_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RegistrarRespuestaRiesgo(APIView):
 
     permission_classes = (IsAuthenticated,)
 
@@ -374,21 +400,115 @@ class RegistrarRespuesta(APIView):
     def get_riesgo(self, riesgo_id):
         try:
             return Riesgo.objects.get(riesgo_id = riesgo_id)
+        except Riesgo.DoesNotExist:
+            raise Http404
+
+    @transaction.atomic
+    def post(self, request, riesgo_id, format=None):
+        serializer = RespuestaSerializer(data=request.data)
+        if serializer.is_valid():
+            gerente_id = get_gerente_id(request)
+            respuesta = serializer.create(request.data, gerente_id)
+            riesgo = self.get_riesgo(riesgo_id)
+            aux_rr = RespuestaHasRiesgo(respuesta = respuesta, riesgo = riesgo)
+            aux_rr.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ActualizarRespuesta(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, gerente, respuesta_id):
+        try:
+            return Respuesta.objects.get(respuesta_id = respuesta_id, gerente_gerente = gerente)
+        except Respuesta.DoesNotExist:
+            raise Http404
+
+    def put(self, request, respuesta_id, format=None):
+        gerente = get_gerente_by_id(request)
+        respuesta = self.get_object(gerente, respuesta_id)
+        serializer = RespuestaSerializer(respuesta, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#proabr
+class EliminarRespuesta(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, respuesta_id, gerente):
+        try:
+            return Respuesta.objects.get(respuesta_id = respuesta_id, gerente_gerente = gerente)
+        except Respuesta.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, respuesta_id, format=None):
+        gerente = get_gerente_by_id(request)
+        respuesta = self.get_object(respuesta_id, gerente)
+        try:
+            aux_rr = RespuestaHasRiesgo.objects.filter(respuesta = respuesta)
+            for rr in aux_rr:
+                rr.delete()
+            respuesta.delete()
+            return Response({"msg":"respuesta eliminada"}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"msg":"No se han podido eliminar"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class AsociarRespuestaRiesgo(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get_riesgo(self, riesgo_id):
+        try:
+            return Riesgo.objects.get(riesgo_id = riesgo_id)
+        except Riesgo.DoesNotExist:
+            raise Http404
+
+    def get_respuesta(self, respuesta_id):
+        try:
+            return Respuesta.objects.get(respuesta_id = respuesta_id)
         except Respuesta.DoesNotExist:
             raise Http404
 
     def post(self, request, riesgo_id, format=None):
-        serializer = RespuestaSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            respuesta_id = copy.deepcopy(serializer.data['respuesta_id'])
+        respuesta_id = request.data["respuesta_id"]
+        respuesta = self.get_respuesta(respuesta_id)
+        riesgo = self.get_riesgo(riesgo_id)
+        aux_rr = RespuestaHasRiesgo(respuesta = respuesta, riesgo = riesgo)
+        aux_rr.save()
+        return Response(status=status.HTTP_201_CREATED)
 
-            serializer_2 = RespuestaHasRiesgoSerializer(data={'respuesta_id':respuesta_id, 'riesgo_id': riesgo_id})
-            if serializer_2.is_valid():
-                serializer_2.save()
+#terminar
+"""
+class DesasociarRespuesta(APIView):
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, respuesta_id, gerente):
+        try:
+            return Respuesta.objects.get(respuesta_id = respuesta_id, gerente_gerente = gerente)
+        except Respuesta.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, respuesta_id, format=None):
+        gerente = get_gerente_by_id(request)
+        respuesta = self.get_object(respuesta_id, gerente)
+        try:
+            aux_rr = RespuestaHasRiesgo.objects.filter(respuesta = respuesta)
+            for rr in aux_rr:
+                rr.delete()
+            respuesta.delete()
+            return Response({"msg":"respuesta eliminada"}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response({"msg":"No se han podido eliminar"}, status=status.HTTP_204_NO_CONTENT)
+
+
+"""
 
 """
 ////////////////////////////////////////////////////////////////////////////
@@ -399,3 +519,25 @@ class RegistrarRespuesta(APIView):
 """ Esta clase permite agregar mis datos al token"""
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#d

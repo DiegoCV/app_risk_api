@@ -135,7 +135,7 @@ class RiesgoSerializerUpdate(serializers.HyperlinkedModelSerializer):
         model = Riesgo
         fields = ("riesgo_nombre", "riesgo_causa", "riesgo_evento", "riesgo_efecto", "riesgo_tipo", "riesgo_prom_evaluacion")
 
-  
+
 """
 //////////////////////////////////////////////////////
     Serializers relacionados con el modelo de Respuesta
@@ -147,8 +147,23 @@ class RespuestaSerializer(serializers.HyperlinkedModelSerializer):
         model = Respuesta
         fields = ("respuesta_id", "respuesta_nombre", "respuesta_descripcion", "respuesta_costo")
 
+    def create(self, validated_data, gerente_id):
+        gerente = Gerente.objects.get(gerente_id = gerente_id)
+        validated_data['gerente_gerente'] = gerente
+        respuesta = Respuesta.objects.create(**validated_data)
+        return respuesta
 
 
+class RespuestaSerializerInsert(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Respuesta
+        fields = ("respuesta_nombre", "respuesta_descripcion", "respuesta_costo")
+
+    def create(self, validated_data, gerente_id):
+        gerente = Gerente.objects.get(gerente_id = gerente_id)
+        validated_data['gerente_gerente'] = gerente
+        respuesta = Respuesta.objects.create(**validated_data)
+        return respuesta
 
 
 
