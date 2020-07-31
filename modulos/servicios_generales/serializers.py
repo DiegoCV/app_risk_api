@@ -8,6 +8,8 @@ from .models import SubCategoria
 from .models import Riesgo
 from .models import Respuesta
 from .models import RespuestaHasRiesgo
+from .models import TipoRecurso
+from .models import Recurso
 
 """
 //////////////////////////////////////////////////////
@@ -166,9 +168,48 @@ class RespuestaSerializerInsert(serializers.HyperlinkedModelSerializer):
         return respuesta
 
 
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de TipoRecurso
+//////////////////////////////////////////////////////
+"""
+
+class TipoRecursoSerializer(serializers.HyperlinkedModelSerializer):
+    tipo_recurso_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = TipoRecurso
+        fields = ("tipo_recurso_id", "tipo_recurso_nombre", "tipo_recurso_descripcion")
+
+    def create(self, validated_data, gerente_id):
+        gerente = Gerente.objects.get(gerente_id = gerente_id)
+        validated_data['gerente'] = gerente
+        respuesta = TipoRecurso.objects.create(**validated_data)
+        return respuesta
+
+class TipoRecursoSerializerInsert(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = TipoRecurso
+        fields = ("tipo_recurso_nombre", "tipo_recurso_descripcion")
 
 
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de Recurso
+//////////////////////////////////////////////////////
+"""
+class RecursoSerializer(serializers.HyperlinkedModelSerializer):
+    recurso_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Recurso
+        fields = ("recurso_id", "recurso_nombre", "recurso_costo",)
 
+    def create(self, validated_data, gerente_id, tipo_recurso_id):
+        gerente = Gerente.objects.get(gerente_id = gerente_id)
+        tipo_recurso = TipoRecurso.objects.get(tipo_recurso_id = tipo_recurso_id)
+        validated_data['gerente'] = gerente
+        validated_data['tipo_recurso'] = tipo_recurso
+        respuesta = Recurso.objects.create(**validated_data)
+        return respuesta
 
 
 

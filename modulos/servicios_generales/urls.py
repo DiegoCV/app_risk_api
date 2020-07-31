@@ -38,7 +38,15 @@ urlpatterns = [
     path('respuesta/actualizar/<int:respuesta_id>/', views.ActualizarRespuesta.as_view()),
     path('respuesta/eliminar/<int:respuesta_id>/', views.EliminarRespuesta.as_view()),
     path('respuesta/asociar/riesgo/<int:riesgo_id>/', views.AsociarRespuestaRiesgo.as_view()),
-    path('respuesta/desasociar/riesgo/<int:respuesta_id>/', views.DesasociarRespuesta.as_view()),
+    path('respuesta/desasociar/riesgo/', views.DesasociarRespuesta.as_view()),
+#urls de tipo recurso
+    path('tipo_recurso/', views.RegistrarTipoRecurso.as_view()),
+    path('tipo_recurso/listar/', views.ListarTipoRecurso.as_view()),
+
+#urls de Recurso
+    path('recurso/tipo_recurso/<int:tipo_recurso_id>/', views.RegistrarRecurso.as_view()),
+    path('recurso/listar/', views.ListarRecurso.as_view()),
+    path('recurso/actualizar/<int:recurso_id>/', views.ActualizarRecurso.as_view()),
 
 ]
 

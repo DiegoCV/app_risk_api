@@ -134,6 +134,7 @@ class SubCategoria(models.Model):
 
 class TipoRecurso(models.Model):
     tipo_recurso_id = models.AutoField(primary_key=True)
+    gerente = models.ForeignKey(Gerente, models.DO_NOTHING)
     tipo_recurso_nombre = models.CharField(max_length=45)
     tipo_recurso_descripcion = models.TextField(blank=True, null=True)
 
