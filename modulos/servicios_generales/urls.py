@@ -21,7 +21,9 @@ urlpatterns = [
     path('categoria/', views.RegistrarCategoria.as_view()),
     path('categoria/eliminar/<int:categoria_id>/', views.EliminarCategoria.as_view()),
     path('categoria/listar/', views.ListarCategorias.as_view()),
+    path('categoria/listar/all/', views.ListarCategoriasCompleto.as_view()),
     path('categoria/actualizar/<int:categoria_id>/', views.ActualizarCategoria.as_view()),
+
 # urls de SubCategorias
     path('sub_categoria/', views.RegistrarSubCategoria.as_view()),
     path('sub_categoria/listar/', views.ListarALLSubCategorias.as_view()),

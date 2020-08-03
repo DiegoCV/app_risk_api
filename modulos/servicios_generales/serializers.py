@@ -89,6 +89,7 @@ class CategoriaSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['gerente'] = gerente
         Categoria.objects.create(**validated_data)
 
+
 """
 //////////////////////////////////////////////////////
     Serializers relacionados con el modelo de SubCategoria

@@ -175,6 +175,20 @@ class ListarCategorias(APIView):
         return Response(serializer.data)
 
 
+class ListarCategoriasCompleto(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        gerente = get_gerente_by_id(request)
+        categorias = Categoria.objects.filter(gerente = gerente)
+        categorias_list = []
+        for categoria in categorias:
+            sub_categorias_list = SubCategoria.objects.filter(categoria = categoria)
+            categorias_list.append({"categoria":CategoriaSerializer(categoria).data, "sub_categorias":SubCategoriaSerializer(sub_categorias_list, many=True).data})
+        return Response(categorias_list)
+
+
 class ActualizarCategoria(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -338,7 +352,7 @@ class RegistrarRiesgo(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+#Esto no valida si pertenece al gerente, sorry
 class ListarRiesgosPorSubcategoria(APIView):
 
     permission_classes = (IsAuthenticated,)
