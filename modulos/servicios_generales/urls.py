@@ -47,7 +47,7 @@ urlpatterns = [
     path('tipo_recurso/listar/', views.ListarTipoRecurso.as_view()),
 
 #urls de Recurso
-    path('recurso/tipo_recurso/<int:tipo_recurso_id>/', views.RegistrarRecurso.as_view()),
+    path('recurso/', views.RegistrarRecurso.as_view()),
     path('recurso/listar/', views.ListarRecurso.as_view()),
     path('recurso/actualizar/<int:recurso_id>/', views.ActualizarRecurso.as_view()),
 

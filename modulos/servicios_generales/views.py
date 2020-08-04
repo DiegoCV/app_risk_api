@@ -569,7 +569,9 @@ class RegistrarRecurso(APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request, tipo_recurso_id, format=None):
+    def post(self, request, format=None):
+        tipo_recurso_id = request.data["tipo_recurso_id"]
+        del request.data["tipo_recurso_id"]
         serializer = RecursoSerializer(data=request.data)
         if serializer.is_valid():
             gerente = get_gerente_id(request)
