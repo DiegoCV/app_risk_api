@@ -66,6 +66,17 @@ class ProyectoSerializerInsert(serializers.HyperlinkedModelSerializer):
         validated_data['gerente'] = gerente
         Proyecto.objects.create(**validated_data)
 
+class ProyectoSerializerInsert_2(serializers.HyperlinkedModelSerializer):
+    proyecto_fecha_inicio = fields.DateField(input_formats=['%Y-%m-%d'])
+    #proyecto_fecha_finl = fields.DateField(input_formats=['%Y-%m-%d'])
+    class Meta:
+        model = Proyecto
+        fields = ("proyecto_nombre", "proyecto_objetivo", "proyecto_alcance", "proyecto_descripcion", "proyecto_presupuesto", "proyecto_fecha_inicio", "proyecto_evaluacion_general", "proyecto_evaluacion")
+    def create(self, validated_data, gerente_usuario):
+        gerente = Gerente.objects.get(gerente_usuario = gerente_usuario )
+        validated_data['gerente'] = gerente
+        Proyecto.objects.create(**validated_data)
+
 class ProyectoSerializerUpdate(serializers.HyperlinkedModelSerializer):
     proyecto_fecha_inicio = fields.DateField(input_formats=['%Y-%m-%d'])
     proyecto_fecha_finl = fields.DateField(input_formats=['%Y-%m-%d'])

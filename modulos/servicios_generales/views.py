@@ -26,6 +26,7 @@ from .models import Recurso
 
 from .serializers import GerenteSerializer
 from .serializers import ProyectoSerializerInsert
+from .serializers import ProyectoSerializerInsert_2
 from .serializers import ProyectoSerializer
 from .serializers import CategoriaSerializer
 from .serializers import SubCategoriaSerializer
@@ -89,7 +90,7 @@ class CrearProyecto(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, format=None):
-        serializer = ProyectoSerializerInsert(data=request.data)
+        serializer = ProyectoSerializerInsert_2(data=request.data)
         if serializer.is_valid():
             username = decodificar_jwt_token(request)["username"]
             serializer.create(request.data, username)
