@@ -411,6 +411,7 @@ class RegistrarRespuesta(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class RegistrarRespuestaRiesgo(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -424,7 +425,9 @@ class RegistrarRespuestaRiesgo(APIView):
             raise Http404
 
     @transaction.atomic
-    def post(self, request, riesgo_id, format=None):
+    def post(self, request, format=None):
+        riesgo_id = request.data["riesgo_id"]
+        del request.data["riesgo_id"]
         serializer = RespuestaSerializer(data=request.data)
         if serializer.is_valid():
             gerente_id = get_gerente_id(request)

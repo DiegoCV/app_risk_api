@@ -35,8 +35,9 @@ urlpatterns = [
     path('riesgo/listar/sub_categoria/<int:sub_categoria_id>/', views.ListarRiesgosPorSubcategoria.as_view()),
     path('riesgo/actualizar/<int:riesgo_id>/', views.ActualizarRiesgo.as_view()),
 # urls de respuestas
-    path('respuesta/', views.RegistrarRespuesta.as_view()),
-    path('respuesta/riesgo/<int:riesgo_id>/', views.RegistrarRespuestaRiesgo.as_view()),
+    #Una respuesta siempre va asociada a un riesgo, por esa razon no va aca
+    #path('respuesta/', views.RegistrarRespuesta.as_view()),
+    path('respuesta/', views.RegistrarRespuestaRiesgo.as_view()),
     path('respuesta/actualizar/<int:respuesta_id>/', views.ActualizarRespuesta.as_view()),
     path('respuesta/eliminar/<int:respuesta_id>/', views.EliminarRespuesta.as_view()),
     path('respuesta/asociar/riesgo/<int:riesgo_id>/', views.AsociarRespuestaRiesgo.as_view()),
