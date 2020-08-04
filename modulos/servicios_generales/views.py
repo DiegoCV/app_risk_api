@@ -416,12 +416,11 @@ class RegistrarRespuestaRiesgo(APIView):
 
     permission_classes = (IsAuthenticated,)
 
-    # Muy seguramente me sabran disculpar, pero es que no tengo tiempo de ponerme a validar estas maricadas.
-    # En un futuro, cuando los riesgos se modifiquen solos deben asegurarse de cambiar este metodo y preguntar si el riesgo pertenece al gerente
-    def get_riesgo(self, riesgo_id):
+    def get_riesgo(self, riesgo_id, gerente_id):
         try:
-            return Riesgo.objects.get(riesgo_id = riesgo_id)
-        except Riesgo.DoesNotExist:
+            return Riesgo.objects.raw("SELECT r.riesgo_id FROM riesgo r INNER JOIN sub_categoria sc ON r.sub_categoria_id = sc.sub_categoria_id INNER JOIN categoria c ON sc.categoria_id = c.categoria_id INNER JOIN gerente g ON c.gerente_id = g.gerente_id WHERE r.riesgo_id = %s AND g.gerente_id = %s;",[riesgo_id, gerente_id])[0]
+        except:
+            #Riesgo.DoesNotExist
             raise Http404
 
     @transaction.atomic
@@ -432,7 +431,7 @@ class RegistrarRespuestaRiesgo(APIView):
         if serializer.is_valid():
             gerente_id = get_gerente_id(request)
             respuesta = serializer.create(request.data, gerente_id)
-            riesgo = self.get_riesgo(riesgo_id)
+            riesgo = self.get_riesgo(riesgo_id, gerente_id)
             aux_rr = RespuestaHasRiesgo(respuesta = respuesta, riesgo = riesgo)
             aux_rr.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
