@@ -9,7 +9,12 @@ urlpatterns = [
     path('excel/', views.ExampleViewSet.as_view()),
     #METODOS RELACIONADOS A LA RBS DE UN PROYECTO
     path('rbs/proyecto/<int:proyecto_id>/', views.ObtenerRbs.as_view()),
+    #METODOS RELACIONADOS CON CATEGORIA RBS
     path('rbs/asociar_categorias/', views.AsociarCategorias.as_view()),
+    path('rbs/desasociar_categorias/', views.DesasociarCategorias.as_view()),
+    #METODOS RELACIONADOS A SUBCATEGORIA RBS
+    path('rbs/asociar_sub_categorias/', views.AsociarSubCategorias.as_view()),
+    path('rbs/desasociar_sub_categorias/', views.DesasociarSubCategorias.as_view()),
 
 
 ]

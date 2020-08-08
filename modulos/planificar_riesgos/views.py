@@ -14,8 +14,9 @@ from .models import CategoriaRbs
 from .models import SubCategoriaRbs
 
 from .serializers import CategoriaRbsSerializer
-from .serializers import SubCategoriaRbsSerializer
 from .serializers import CategoriaRbsSerializerInsert
+from .serializers import SubCategoriaRbsSerializer
+from .serializers import SubCategoriaRbsSerializerInsert
 
 from .utils import get_gerente_id
 from .utils import get_gerente_by_id
@@ -51,6 +52,12 @@ class ObtenerRbs(APIView):
         return Response(categorias_rbs_list)
 
 
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODOS RELACIONADOS CON LA CATEGORIA RBS
+/////////////////////////////////////////////////////////////////////////////
+"""
+
 class AsociarCategorias(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -70,6 +77,80 @@ class AsociarCategorias(APIView):
                 r = CategoriaRbsSerializerInsert()
                 r.create(datos=e)
             return Response(status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DesasociarCategorias(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, format=None):
+        try:
+            proyecto_id = request.data["proyecto_id"]
+            gerente_id = get_gerente_id(request)
+            categorias_rbs_id = request.data["categorias_rbs_id"]
+            rbs = Rbs.objects.raw("SELECT r.rbs_id, r.proyecto_id FROM rbs r INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE p.proyecto_id = %s AND g.gerente_id = %s", [proyecto_id, gerente_id])[0]
+            for categoria_rbs_id in categorias_rbs_id:
+                categoria_rbs = CategoriaRbs.objects.get(categoria_rbs_id = categoria_rbs_id, rbs = rbs)
+                categoria_rbs.delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODOS RELACIONADOS CON LA SUB CATEGORIA RBS
+/////////////////////////////////////////////////////////////////////////////
+"""
+
+class AsociarSubCategorias(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        try:
+            proyecto_id = request.data["proyecto_id"]
+            categoria_rbs_id = request.data["categoria_rbs_id"]
+            gerente_id = get_gerente_id(request)
+            sub_categorias_id = request.data["sub_categorias_id"]
+            rbs = Rbs.objects.raw("SELECT r.rbs_id, r.proyecto_id FROM rbs r INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE p.proyecto_id = %s AND g.gerente_id = %s", [proyecto_id, gerente_id])[0]
+            categoria_rbs = CategoriaRbs.objects.get(categoria_rbs_id = categoria_rbs_id, rbs = rbs)
+            print(categoria_rbs)
+            print(categoria_rbs.categoria)
+            for sub_categoria_id in sub_categorias_id:
+                sub_categoria = SubCategoria.objects.get(sub_categoria_id = sub_categoria_id, categoria = categoria_rbs.categoria)
+                e ={"categoria_rbs":categoria_rbs, "sub_categoria":sub_categoria}
+                r = SubCategoriaRbsSerializerInsert()
+                r.create(datos=e)
+            return Response(status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DesasociarSubCategorias(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, request):
+        try:
+            return Proyecto.objects.get(proyecto_id = request.data["proyecto_id"], gerente = get_gerente_by_id(request))
+        except Proyecto.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, format=None):
+        try:
+            proyecto = self.get_object(request)
+            sub_categorias_rbs_id = request.data["sub_categorias_rsb_id"]
+            for sub_categoria_rbs_id in sub_categorias_rbs_id:
+                sub_categoria_rbs = SubCategoriaRbs.objects.raw("SELECT scr.sub_categoria_rbs_id, scr.sub_categoria_id, scr.categoria_rbs_id FROM sub_categoria_rbs scr INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id WHERE sub_categoria_rbs_id = %s AND r.proyecto_id = %s",[sub_categoria_rbs_id, proyecto.proyecto_id])[0]
+                sub_categoria_rbs.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as inst:
             print(inst)
             return Response(status=status.HTTP_400_BAD_REQUEST)

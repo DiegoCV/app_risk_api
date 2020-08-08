@@ -84,6 +84,18 @@ class SubCategoriaRbsSerializer(serializers.ModelSerializer):
         fields = ("sub_categoria_rbs_id", "sub_categoria", "categoria_rbs")
 
 
+class SubCategoriaRbsSerializerInsert(serializers.ModelSerializer):
+    sub_categoria_rbs_id = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = SubCategoriaRbs
+        fields = ("sub_categoria_rbs_id", "sub_categoria", "categoria_rbs")
+
+    def create(self, datos):
+        subCategoriaRbs = SubCategoriaRbs(categoria_rbs=datos["categoria_rbs"], sub_categoria=datos["sub_categoria"])
+        subCategoriaRbs.save()
+        return subCategoriaRbs
+
 
 
 
