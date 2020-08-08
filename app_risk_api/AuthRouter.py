@@ -9,6 +9,8 @@ class AuthRouter(object):
         """
         if model._meta.app_label == 'servicios_generales':
             return 'riesgos'
+        elif model._meta.app_label == 'planificar_riesgos':
+            return 'riesgos'
         return None
 
     def db_for_write(self, model, **hints):
@@ -16,6 +18,8 @@ class AuthRouter(object):
         Attempts to write auth models go to auth_db.
         """
         if model._meta.app_label == 'servicios_generales':
+            return 'riesgos'
+        elif model._meta.app_label == 'planificar_riesgos':
             return 'riesgos'
         return None
 
@@ -26,6 +30,9 @@ class AuthRouter(object):
         if obj1._meta.app_label == 'servicios_generales' or \
            obj2._meta.app_label == 'servicios_generales':
            return True
+        elif obj1._meta.app_label == 'planificar_riesgos' or \
+           obj2._meta.app_label == 'planificar_riesgos':
+            return True
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
@@ -34,5 +41,7 @@ class AuthRouter(object):
         database.
         """
         if app_label == 'servicios_generales':
+            return db == 'riesgos'
+        elif app_label == 'planificar_riesgos':
             return db == 'riesgos'
         return None

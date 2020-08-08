@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'modulos.servicios_generales',
+    'modulos.planificar_riesgos',
     'corsheaders',
 ]
 

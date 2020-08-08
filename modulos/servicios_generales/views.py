@@ -3,7 +3,9 @@ import copy
 
 from django.http import Http404
 from django.db import transaction
+from django.http import HttpResponse
 from django.contrib.auth.models import User
+
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -12,6 +14,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 
 from .models import Gerente
 from .models import Proyecto
@@ -22,7 +25,6 @@ from .models import Respuesta
 from .models import RespuestaHasRiesgo
 from .models import TipoRecurso
 from .models import Recurso
-
 
 from .serializers import GerenteSerializer
 from .serializers import ProyectoSerializerInsert
@@ -608,6 +610,9 @@ class ActualizarRecurso(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 """
 ////////////////////////////////////////////////////////////////////////////
     CONFIGURACION DEL TOKEN
@@ -617,15 +622,6 @@ class ActualizarRecurso(APIView):
 """ Esta clase permite agregar mis datos al token"""
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-
-
-
-
-
-
-
-
-
 
 
 

@@ -17,5 +17,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('api_v1/', include('modulos.servicios_generales.urls')),
+    path('api_v1/', include('modulos.planificar_riesgos.urls')),
 ]
-

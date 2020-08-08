@@ -222,14 +222,3 @@ class RecursoSerializer(serializers.HyperlinkedModelSerializer):
         validated_data['tipo_recurso'] = tipo_recurso
         respuesta = Recurso.objects.create(**validated_data)
         return respuesta
-
-
-
-
-
-
-
-
-
-
-#d
