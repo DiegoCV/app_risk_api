@@ -23,6 +23,7 @@ from .models import SubCategoria
 from .models import Riesgo
 from .models import Respuesta
 from .models import RespuestaHasRiesgo
+from .models import AccionRespuesta
 from .models import TipoRecurso
 from .models import Recurso
 
@@ -37,6 +38,7 @@ from .serializers import MyTokenObtainPairSerializer
 from .serializers import RiesgoSerializer
 from .serializers import RiesgoSerializerUpdate
 from .serializers import RespuestaSerializer
+from .serializers import AccionRespuestaSerializer
 from .serializers import RespuestaSerializerInsert
 from .serializers import TipoRecursoSerializerInsert
 from .serializers import TipoRecursoSerializer
@@ -271,6 +273,28 @@ class ListarSubCategorias(APIView):
             raise Http404
 
 
+class ListarSubCategoriasConRiesgos(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, categoria_id, format=None):
+        try:
+            gerente = get_gerente_by_id(request)
+            categoria = Categoria.objects.get(categoria_id = categoria_id, gerente = gerente)
+            sub_categorias = SubCategoria.objects.filter(categoria = categoria)
+            list_rta = []
+            for sub_categoria in sub_categorias:
+                riesgos = Riesgo.objects.filter(sub_categoria = sub_categoria)
+                list_rta.append({
+                    "sub_categoria": SubCategoriaSerializer(sub_categoria).data,
+                    "riesgos": RiesgoSerializer(riesgos,many=True).data
+                })
+            return Response(list_rta)
+        except Exception as inst:
+            print(inst)
+            raise Http404
+
+
 class ListarALLSubCategorias(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -413,6 +437,39 @@ class RegistrarRespuesta(APIView):
             respuesta = serializer.create(request.data, gerente_id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class ListarRespuestaPorSubcategoria(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get_riesgos(self, sub_categoria_id, gerente_id):
+        try:
+            riesgos = Riesgo.objects.raw("SELECT r.riesgo_id, r.riesgo_nombre, r.riesgo_causa, r.riesgo_evento, r.riesgo_efecto, r.riesgo_tipo, r.riesgo_prom_evaluacion FROM riesgo r INNER JOIN sub_categoria sc  ON r.sub_categoria_id = sc.sub_categoria_id INNER JOIN categoria c  ON sc.categoria_id = c.categoria_id INNER JOIN gerente g ON c.gerente_id = g.gerente_id WHERE sc.sub_categoria_id = %s AND g.gerente_id = %s", [sub_categoria_id, gerente_id])
+            return riesgos
+        except IndexError:
+            return False
+        except Exception as inst:
+            print(inst)
+            raise Http404
+
+    def get(self, request, format=None):
+        try:
+            sub_categoria_id = request.data["sub_categoria_id"]
+            gerente_id = get_gerente_id(request)
+            riesgos = self.get_riesgos(sub_categoria_id, gerente_id)
+            respuestas_list = []
+            for riesgo in riesgos:
+                respuestas = Respuesta.objects.raw("SELECT rta.respuesta_id, rta.respuesta_nombre, rta.respuesta_descripcion, rta.respuesta_costo, rta.gerente_gerente_id FROM respuesta rta INNER JOIN respuesta_has_riesgo rhr ON rta.respuesta_id = rhr.respuesta_id WHERE rhr.riesgo_id = %s",[riesgo.riesgo_id])
+                respuestas_list.append({
+                    "riesgo":RiesgoSerializer(riesgo).data,
+                    "respuestas":RespuestaSerializer(respuestas, many=True).data
+                    })
+            return Response(respuestas_list)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class RegistrarRespuestaRiesgo(APIView):
@@ -592,6 +649,17 @@ class ListarRecurso(APIView):
         return Response(serializer.data)
 
 
+class ListarRecursoPorTipo(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, tipo_recurso_id, format=None):
+        gerente = get_gerente_by_id(request)
+        recursos = Recurso.objects.filter(gerente = gerente, tipo_recurso_id= tipo_recurso_id)
+        serializer = RecursoSerializer(recursos, many=True)
+        return Response(serializer.data)
+
+
 class ActualizarRecurso(APIView):
 
     permission_classes = (IsAuthenticated,)
@@ -612,6 +680,37 @@ class ActualizarRecurso(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+"""
+////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+"""
+class RegistrarAccionRespuesta(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        try:
+            respuesta = Respuesta.objects.get(gerente_gerente_id = get_gerente_id(request), respuesta_id = request.data["respuesta_id"])
+            accion_respuesta = AccionRespuesta(accion_respuesta_descripcion = request.data["accion_respuesta_descripcion"], respuesta = respuesta)
+            accion_respuesta.save()
+            return Response({"msg": "exitoso"}, status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListarAccionRespuesta(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        try:
+            acciones_respuesta = AccionRespuesta.objects.raw("SELECT ar.accion_respuesta_id, ar.accion_respuesta_descripcion, ar.respuesta_id FROM accion_respuesta ar INNER JOIN respuesta r ON ar.respuesta_id = r.respuesta_id INNER JOIN gerente g ON r.gerente_gerente_id = g.gerente_id WHERE r.respuesta_id = %s AND g.gerente_id = %s", [request.data["respuesta_id"], get_gerente_id(request)])
+            return Response(AccionRespuestaSerializer(acciones_respuesta, many=True).data)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 """
 ////////////////////////////////////////////////////////////////////////////

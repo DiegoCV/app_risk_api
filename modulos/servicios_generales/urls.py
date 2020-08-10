@@ -28,6 +28,7 @@ urlpatterns = [
     path('sub_categoria/', views.RegistrarSubCategoria.as_view()),
     path('sub_categoria/listar/', views.ListarALLSubCategorias.as_view()),
     path('sub_categoria/listar/categoria/<int:categoria_id>/', views.ListarSubCategorias.as_view()),
+    path('sub_categoria/listar_riesgos/categoria/<int:categoria_id>/', views.ListarSubCategoriasConRiesgos.as_view()),
     path('sub_categoria/actualizar/<int:pk_sub_categoria>/', views.ActualizarSubCategoria.as_view()),
     path('sub_categoria/eliminar/<int:pk_sub_categoria>/', views.EliminarSubCategoria.as_view()),
 # urls de riesgo
@@ -38,10 +39,14 @@ urlpatterns = [
     #Una respuesta siempre va asociada a un riesgo, por esa razon no va aca
     #path('respuesta/', views.RegistrarRespuesta.as_view()),
     path('respuesta/', views.RegistrarRespuestaRiesgo.as_view()),
+    path('respuesta/listar/', views.ListarRespuestaPorSubcategoria.as_view()),
     path('respuesta/actualizar/<int:respuesta_id>/', views.ActualizarRespuesta.as_view()),
     path('respuesta/eliminar/<int:respuesta_id>/', views.EliminarRespuesta.as_view()),
     path('respuesta/asociar/riesgo/<int:riesgo_id>/', views.AsociarRespuestaRiesgo.as_view()),
     path('respuesta/desasociar/riesgo/', views.DesasociarRespuesta.as_view()),
+# urls de acciones de respuestas
+    path('accion_respuesta/', views.RegistrarAccionRespuesta.as_view()),
+    path('accion_respuesta/listar/', views.ListarAccionRespuesta.as_view()),
 #urls de tipo recurso
     path('tipo_recurso/', views.RegistrarTipoRecurso.as_view()),
     path('tipo_recurso/listar/', views.ListarTipoRecurso.as_view()),
@@ -49,6 +54,7 @@ urlpatterns = [
 #urls de Recurso
     path('recurso/', views.RegistrarRecurso.as_view()),
     path('recurso/listar/', views.ListarRecurso.as_view()),
+    path('recurso/listar/tipo_recurso/<int:tipo_recurso_id>/', views.ListarRecursoPorTipo.as_view()),
     path('recurso/actualizar/<int:recurso_id>/', views.ActualizarRecurso.as_view()),
 
 ]

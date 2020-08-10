@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.db import transaction
 from django.http import HttpResponse
 
 from rest_framework import status
@@ -12,11 +13,16 @@ from .models import Categoria
 from .models import SubCategoria
 from .models import CategoriaRbs
 from .models import SubCategoriaRbs
+from .models import Responsable
+from .models import RiesgoRbs
 
 from .serializers import CategoriaRbsSerializer
 from .serializers import CategoriaRbsSerializerInsert
 from .serializers import SubCategoriaRbsSerializer
 from .serializers import SubCategoriaRbsSerializerInsert
+from .serializers import ResponsableSerializer
+from .serializers import ResponsableSerializerList
+from .serializers import RiesgoSerializer
 
 from .utils import get_gerente_id
 from .utils import get_gerente_by_id
@@ -154,6 +160,65 @@ class DesasociarSubCategorias(APIView):
         except Exception as inst:
             print(inst)
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODO DE PRUEBA PARA RESPONSABLES
+/////////////////////////////////////////////////////////////////////////////
+"""
+class RegistrarResponsable(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        proyecto_id = request.data["proyecto"]["proyecto_id"]
+        del request.data["proyecto"]["proyecto_id"]
+        request.data["proyecto"] = Proyecto(proyecto_id = proyecto_id)
+        serializer = ResponsableSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.create(request.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ListarResponsablePorProyecto(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+        try:
+            gerente = get_gerente_by_id(request)
+            proyecto = Proyecto.objects.get(proyecto_id = request.data["proyecto_id"], gerente = gerente)
+            responsables = Responsable.objects.filter(proyecto = proyecto)
+            serializer = ResponsableSerializerList(responsables, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODO DE PRUEBA PARA RIESGOS
+/////////////////////////////////////////////////////////////////////////////
+"""
+class RegistrarRiesgoAsosiadoSubcategoriaRbs(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    @transaction.atomic
+    def post(self, request, format=None):
+        sql = "SELECT scr.sub_categoria_rbs_id, scr.sub_categoria_id, scr.categoria_rbs_id FROM sub_categoria_rbs scr INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE scr.sub_categoria_rbs_id = %s AND g.gerente_id = %s"
+        sub_categoria_rbs = SubCategoriaRbs.objects.raw(sql,[request.data["sub_categoria_rbs_id"], get_gerente_id(request)])[0]
+        del request.data["sub_categoria_rbs_id"]
+        request.data["sub_categoria_id"] = sub_categoria_rbs.sub_categoria_id
+        serializer = RiesgoSerializer(data=request.data)
+        if serializer.is_valid():
+            riesgo = serializer.create(request.data)
+            riesgo_rbs = RiesgoRbs(riesgo = riesgo, sub_categoria_rbs = sub_categoria_rbs)
+            riesgo_rbs.save()
+            return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

@@ -6,6 +6,8 @@ from .models import Categoria
 from .models import SubCategoria
 from .models import CategoriaRbs
 from .models import SubCategoriaRbs
+from .models import Responsable
+from .models import Riesgo
 
 
 """
@@ -86,7 +88,7 @@ class SubCategoriaRbsSerializer(serializers.ModelSerializer):
 
 class SubCategoriaRbsSerializerInsert(serializers.ModelSerializer):
     sub_categoria_rbs_id = serializers.IntegerField(read_only=True)
-    
+
     class Meta:
         model = SubCategoriaRbs
         fields = ("sub_categoria_rbs_id", "sub_categoria", "categoria_rbs")
@@ -95,6 +97,62 @@ class SubCategoriaRbsSerializerInsert(serializers.ModelSerializer):
         subCategoriaRbs = SubCategoriaRbs(categoria_rbs=datos["categoria_rbs"], sub_categoria=datos["sub_categoria"])
         subCategoriaRbs.save()
         return subCategoriaRbs
+
+
+
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo Proyecto
+//////////////////////////////////////////////////////
+"""
+class ProyectoSerializer(serializers.ModelSerializer):
+    proyecto_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Proyecto
+        fields = ("proyecto_id",)
+
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con Responsable
+//////////////////////////////////////////////////////
+"""
+class ResponsableSerializer(serializers.ModelSerializer):
+    responsable_id = serializers.IntegerField(read_only=True)
+    proyecto = ProyectoSerializer(read_only=True)
+    class Meta:
+        model = Responsable
+        fields = ("responsable_id", "responsable_nombre", "responsable_descripcion", "proyecto")
+
+
+
+class ResponsableSerializerList(serializers.HyperlinkedModelSerializer):
+    responsable_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = Responsable
+        fields = ("responsable_id", "responsable_nombre", "responsable_descripcion",)
+
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con Riesgo
+//////////////////////////////////////////////////////
+"""
+class RiesgoSerializer(serializers.HyperlinkedModelSerializer):
+    riesgo_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Riesgo
+        fields = ("riesgo_id", "riesgo_nombre", "riesgo_causa", "riesgo_evento", "riesgo_efecto", "riesgo_tipo", "riesgo_prom_evaluacion")
+
+    def create(self, validated_data):
+        sub_categoria_id = validated_data['sub_categoria_id']
+        sub_categoria = SubCategoria.objects.get(sub_categoria_id = sub_categoria_id)
+        validated_data['sub_categoria'] = sub_categoria
+        riesgo = Riesgo.objects.create(**validated_data)
+        return riesgo
+
 
 
 

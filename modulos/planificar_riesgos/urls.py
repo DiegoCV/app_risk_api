@@ -15,8 +15,31 @@ urlpatterns = [
     #METODOS RELACIONADOS A SUBCATEGORIA RBS
     path('rbs/asociar_sub_categorias/', views.AsociarSubCategorias.as_view()),
     path('rbs/desasociar_sub_categorias/', views.DesasociarSubCategorias.as_view()),
+    #RESPONSABLE
+    path('responsable/', views.RegistrarResponsable.as_view()),
+    path('responsable/listar/', views.ListarResponsablePorProyecto.as_view()),
+    #RIESGO
+    path('riesgo/rbs/', views.RegistrarRiesgoAsosiadoSubcategoriaRbs.as_view()),
 
 
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#B

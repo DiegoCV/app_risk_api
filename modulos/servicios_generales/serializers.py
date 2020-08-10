@@ -7,6 +7,7 @@ from .models import Categoria
 from .models import SubCategoria
 from .models import Riesgo
 from .models import Respuesta
+from .models import AccionRespuesta
 from .models import RespuestaHasRiesgo
 from .models import TipoRecurso
 from .models import Recurso
@@ -51,9 +52,10 @@ class GerenteSerializerUtil(serializers.HyperlinkedModelSerializer):
 //////////////////////////////////////////////////////
 """
 class ProyectoSerializer(serializers.HyperlinkedModelSerializer):
+    proyecto_id = serializers.IntegerField(read_only=True)
     class Meta:
         model = Proyecto
-        fields = ("proyecto_nombre", "proyecto_objetivo", "proyecto_alcance", "proyecto_descripcion", "proyecto_presupuesto", "proyecto_fecha_inicio", "proyecto_fecha_finl", "proyecto_evaluacion_general", "proyecto_evaluacion")
+        fields = ("proyecto_id", "proyecto_nombre", "proyecto_objetivo", "proyecto_alcance", "proyecto_descripcion", "proyecto_presupuesto", "proyecto_fecha_inicio", "proyecto_fecha_finl", "proyecto_evaluacion_general", "proyecto_evaluacion")
 
 class ProyectoSerializerInsert(serializers.HyperlinkedModelSerializer):
     proyecto_fecha_inicio = fields.DateField(input_formats=['%Y-%m-%d'])
@@ -111,6 +113,8 @@ class SubCategoriaSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = SubCategoria
         fields = ("sub_categoria_id", "sub_categoria_nombre", "sub_categoria_descripcion")
+
+
 
     def create(self, validated_data):
         categoria_id = validated_data['categoria_id']
@@ -178,6 +182,17 @@ class RespuestaSerializerInsert(serializers.HyperlinkedModelSerializer):
         validated_data['gerente_gerente'] = gerente
         respuesta = Respuesta.objects.create(**validated_data)
         return respuesta
+
+"""
+//////////////////////////////////////////////////////
+    Serializers relacionados con el modelo de AccionRespuesta
+//////////////////////////////////////////////////////
+"""
+class AccionRespuestaSerializer(serializers.HyperlinkedModelSerializer):
+    accion_respuesta_id = serializers.IntegerField(read_only=True)
+    class Meta:
+        model = AccionRespuesta
+        fields = ("accion_respuesta_id", "accion_respuesta_descripcion")
 
 
 """
