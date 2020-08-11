@@ -20,6 +20,13 @@ urlpatterns = [
     path('responsable/listar/', views.ListarResponsablePorProyecto.as_view()),
     #RIESGO
     path('riesgo/rbs/', views.RegistrarRiesgoAsosiadoSubcategoriaRbs.as_view()),
+    path('riesgo/rbs/asociar/', views.AsociarRiesgoRbs.as_view()),
+    path('riesgo/rbs/desasociar/', views.DesasociarRiesgoRbs.as_view()),
+    #RIESGO RBS
+    path('riesgo_rbs/asociar/actividad/', views.AsociarRiesgoRbsActividad.as_view()),
+    path('riesgo_rbs/desasociar/actividad/', views.DesasociarRiesgoRbsActividad.as_view()),
+    #Respuesta
+    path('respuesta/asociar/riesgo_rbs/', views.AsociarRespuestaconRiesgoRbs.as_view()),
 
 
 ]

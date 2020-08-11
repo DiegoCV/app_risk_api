@@ -14,7 +14,15 @@ from .models import SubCategoria
 from .models import CategoriaRbs
 from .models import SubCategoriaRbs
 from .models import Responsable
+from .models import Respuesta
+from .models import RespuestaRbs
 from .models import RiesgoRbs
+from .models import RiesgoRbsHasRespuestaRbs
+from .models import RespuestaHasRiesgo
+
+from .models import Riesgo
+from .models import Actividad
+from .models import ActividadHasRiesgoRbs
 
 from .serializers import CategoriaRbsSerializer
 from .serializers import CategoriaRbsSerializerInsert
@@ -220,7 +228,114 @@ class RegistrarRiesgoAsosiadoSubcategoriaRbs(APIView):
             return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class AsociarRiesgoRbs(APIView):
 
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        try:
+            sql = "SELECT scr.sub_categoria_rbs_id, scr.sub_categoria_id, scr.categoria_rbs_id FROM sub_categoria_rbs scr INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE scr.sub_categoria_rbs_id = %s AND g.gerente_id = %s"
+            sub_categoria_rbs = SubCategoriaRbs.objects.raw(sql,[request.data["sub_categoria_rbs_id"], get_gerente_id(request)])[0]
+            riesgo = Riesgo(riesgo_id = request.data["riesgo_id"])
+            riesgo_rbs = RiesgoRbs(riesgo = riesgo, sub_categoria_rbs = sub_categoria_rbs)
+            riesgo_rbs.save()
+            return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DesasociarRiesgoRbs(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, format=None):
+        try:
+            sql = "SELECT rb.riesgo_rbs_id, rb.sub_categoria_rbs_id, rb.riesgo_id FROM riesgo_rbs rb INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE rb.riesgo_rbs_id = %s AND g.gerente_id = %s"
+            riesgo_rbs = RiesgoRbs.objects.raw(sql,[request.data["riesgo_rbs_id"], get_gerente_id(request)])[0]
+            riesgo_rbs.delete()
+            return Response({"msg": "Eliminado con exito"}, status=status.HTTP_200_OK)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class AsociarRiesgoRbsActividad(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, format=None):
+        try:
+            sql = "SELECT rb.riesgo_rbs_id, rb.sub_categoria_rbs_id, rb.riesgo_id FROM riesgo_rbs rb INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE rb.riesgo_rbs_id = %s AND p.proyecto_id = %s AND g.gerente_id = %s"
+            riesgo_rbs = RiesgoRbs.objects.raw(sql,[request.data["riesgo_rbs_id"], request.data["proyecto_id"],get_gerente_id(request)])[0]
+
+            sql_2 = "SELECT a.actividad_id FROM actividad a INNER JOIN proyecto p ON a.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE a.actividad_id = %s AND p.proyecto_id =%s AND g.gerente_id = %s"
+            actividad = Actividad.objects.raw(sql_2,[request.data["actividad_id"],  request.data["proyecto_id"], get_gerente_id(request)])[0]
+            a_h_r =ActividadHasRiesgoRbs(riesgo_rbs = riesgo_rbs, actividad = actividad)
+            a_h_r.save()
+            return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DesasociarRiesgoRbsActividad(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, format=None):
+        try:
+            sql = "SELECT rb.riesgo_rbs_id, rb.sub_categoria_rbs_id, rb.riesgo_id FROM riesgo_rbs rb INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE rb.riesgo_rbs_id = %s AND p.proyecto_id = %s AND g.gerente_id = %s"
+            riesgo_rbs = RiesgoRbs.objects.raw(sql,[request.data["riesgo_rbs_id"], request.data["proyecto_id"],get_gerente_id(request)])[0]
+
+            sql_2 = "SELECT a.actividad_id FROM actividad a INNER JOIN proyecto p ON a.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE a.actividad_id = %s AND p.proyecto_id =%s AND g.gerente_id = %s"
+            actividad = Actividad.objects.raw(sql_2,[request.data["actividad_id"],  request.data["proyecto_id"], get_gerente_id(request)])[0]
+            a_h_r =ActividadHasRiesgoRbs(riesgo_rbs = riesgo_rbs, actividad = actividad)
+            a_h_r.delete()
+            return Response({"msg": "eliminación exitoso"}, status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODOS RELACIONADOS CON RESPUESTAS RBS
+/////////////////////////////////////////////////////////////////////////////
+"""
+class AsociarRespuestaconRiesgoRbs(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    @transaction.atomic
+    def post(self, request, format=None):
+        try:
+            gerente_id = get_gerente_id(request)
+            proyecto_id = request.data["proyecto_id"]
+            riesgo_rbs_id = request.data["riesgo_rbs_id"]
+            respuesta_id = request.data["respuesta_id"]
+
+            sql = "SELECT rb.riesgo_rbs_id, rb.sub_categoria_rbs_id, rb.riesgo_id FROM riesgo_rbs rb INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE rb.riesgo_rbs_id = %s AND p.proyecto_id = %s AND g.gerente_id = %s"
+            riesgo_rbs = RiesgoRbs.objects.raw(sql,[riesgo_rbs_id, proyecto_id, gerente_id])[0]
+
+            respuesta = Respuesta.objects.get(respuesta_id=respuesta_id, gerente_gerente_id = gerente_id)
+
+            print(riesgo_rbs.riesgo)
+            print(respuesta)
+            rhr = RespuestaHasRiesgo.objects.get(respuesta = respuesta, riesgo = riesgo_rbs.riesgo)
+
+            print(rhr)
+            if(rhr):
+                rbs = Rbs.objects.raw("SELECT r.rbs_id, r.proyecto_id FROM rbs r INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE p.proyecto_id = %s AND g.gerente_id = %s", [proyecto_id, gerente_id])[0]
+                respuesta_rbs = RespuestaRbs(respuesta = respuesta, rbs = rbs)
+                respuesta_rbs.save()
+                rb_h_rb = RiesgoRbsHasRespuestaRbs(respuesta_rbs_respuesta_rbs=respuesta_rbs, riesgo_rbs_riesgo_rbs = riesgo_rbs)
+                rb_h_rb.save()
+                return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
+            else:
+             return Http404
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 """
 ////////////////////////////////////////////////////////////////////////////

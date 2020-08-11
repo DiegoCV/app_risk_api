@@ -29,6 +29,14 @@ class Actividad(models.Model):
         managed = False
         db_table = 'actividad'
 
+class ActividadHasRiesgoRbs(models.Model):
+    actividad = models.OneToOneField(Actividad, models.DO_NOTHING, primary_key=True)
+    riesgo_rbs = models.ForeignKey('RiesgoRbs', models.DO_NOTHING)
+
+    class Meta:
+        managed = False
+        db_table = 'actividad_has_riesgo_rbs'
+        unique_together = (('actividad', 'riesgo_rbs'),)
 
 class Categoria(models.Model):
     categoria_id = models.AutoField(primary_key=True)
@@ -128,7 +136,7 @@ class Respuesta(models.Model):
 
 
 class RespuestaHasRiesgo(models.Model):
-    respuesta = models.OneToOneField(Respuesta, models.DO_NOTHING)
+    respuesta = models.OneToOneField(Respuesta, models.DO_NOTHING, primary_key=True)
     riesgo = models.OneToOneField('Riesgo', models.DO_NOTHING)
 
     class Meta:
