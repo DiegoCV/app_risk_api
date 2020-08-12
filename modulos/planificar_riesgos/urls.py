@@ -27,7 +27,11 @@ urlpatterns = [
     path('riesgo_rbs/desasociar/actividad/', views.DesasociarRiesgoRbsActividad.as_view()),
     #Respuesta
     path('respuesta/asociar/riesgo_rbs/', views.AsociarRespuestaconRiesgoRbs.as_view()),
+    path('respuesta/desasociar/riesgo_rbs/', views.DesasociarRespuestaRbsconRiesgoRbs.as_view()),
 
+    #INFORMES
+
+    path('informe/planificar_riesgos/', views.GenerarRiesgosPorProyecto.as_view()),
 
 ]
 

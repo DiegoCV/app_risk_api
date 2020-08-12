@@ -35,6 +35,8 @@ from .serializers import RiesgoSerializer
 from .utils import get_gerente_id
 from .utils import get_gerente_by_id
 
+from .informe import reporteEXCEL
+
 """
 ////////////////////////////////////////////////////////////////////////////
     METODOS RELACIONADOS CON LA RBS
@@ -326,8 +328,11 @@ class AsociarRespuestaconRiesgoRbs(APIView):
             print(rhr)
             if(rhr):
                 rbs = Rbs.objects.raw("SELECT r.rbs_id, r.proyecto_id FROM rbs r INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE p.proyecto_id = %s AND g.gerente_id = %s", [proyecto_id, gerente_id])[0]
-                respuesta_rbs = RespuestaRbs(respuesta = respuesta, rbs = rbs)
-                respuesta_rbs.save()
+                try:
+                    respuesta_rbs = RespuestaRbs.objects.get(respuesta = respuesta, rbs = rbs)
+                except RespuestaRbs.DoesNotExist:
+                    respuesta_rbs = RespuestaRbs(respuesta = respuesta, rbs = rbs)
+                    respuesta_rbs.save()
                 rb_h_rb = RiesgoRbsHasRespuestaRbs(respuesta_rbs_respuesta_rbs=respuesta_rbs, riesgo_rbs_riesgo_rbs = riesgo_rbs)
                 rb_h_rb.save()
                 return Response({"msg": "registro exitoso"}, status=status.HTTP_201_CREATED)
@@ -336,6 +341,67 @@ class AsociarRespuestaconRiesgoRbs(APIView):
         except Exception as inst:
             print(inst)
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class DesasociarRespuestaRbsconRiesgoRbs(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, format=None):
+        try:
+            proyecto_id = request.data["proyecto_id"]
+            riesgo_rbs_id = request.data["riesgo_rbs_id"]
+            respuesta_rbs_id = request.data["respuesta_rbs_id"]
+            gerente_id = get_gerente_id(request)
+
+            sql = "SELECT rb.riesgo_rbs_id, rb.sub_categoria_rbs_id, rb.riesgo_id FROM riesgo_rbs rb INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r ON cr.rbs_id = r.rbs_id INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE rb.riesgo_rbs_id = %s AND p.proyecto_id = %s AND g.gerente_id = %s"
+            riesgo_rbs = RiesgoRbs.objects.raw(sql,[riesgo_rbs_id, request.data["proyecto_id"],gerente_id])[0]
+
+            rbs = Rbs.objects.raw("SELECT r.rbs_id, r.proyecto_id FROM rbs r INNER JOIN proyecto p ON r.proyecto_id = p.proyecto_id INNER JOIN gerente g ON p.gerente_id = g.gerente_id WHERE p.proyecto_id = %s AND g.gerente_id = %s", [proyecto_id, gerente_id])[0]
+            respuesta_rbs = RespuestaRbs(respuesta_rbs_id = respuesta_rbs_id, rbs = rbs)
+            rb_h_rb = RiesgoRbsHasRespuestaRbs(respuesta_rbs_respuesta_rbs=respuesta_rbs, riesgo_rbs_riesgo_rbs = riesgo_rbs)
+            rb_h_rb.delete()
+            return Response({"msg": "eliminación exitoso"}, status=status.HTTP_201_CREATED)
+        except Exception as inst:
+            print(inst)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+"""
+////////////////////////////////////////////////////////////////////////////
+    METODOS DE INFORMES
+/////////////////////////////////////////////////////////////////////////////
+"""
+class GenerarRiesgosPorProyecto(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, format=None):
+
+        gerente_id = get_gerente_id(request)
+        proyecto_id = request.data["proyecto_id"]
+        proyecto = Proyecto.objects.get(proyecto_id = proyecto_id, gerente_id = gerente_id)
+        rbs = Rbs.objects.get(proyecto = proyecto)
+
+        titulo = "Informe de riesgos para el proyecto "+proyecto.proyecto_nombre
+        sql = "SELECT r.riesgo_id, r.riesgo_nombre, r.riesgo_causa, r.riesgo_evento, r.riesgo_tipo, r.sub_categoria_id FROM riesgo r INNER JOIN riesgo_rbs rb ON  r.riesgo_id = rb.riesgo_id INNER JOIN sub_categoria_rbs scr ON rb.sub_categoria_rbs_id = scr.sub_categoria_rbs_id INNER JOIN categoria_rbs cr ON scr.categoria_rbs_id = cr.categoria_rbs_id INNER JOIN rbs r_bs ON cr.rbs_id = r_bs.rbs_id WHERE r_bs.rbs_id = %s"
+        riesgos = Riesgo.objects.raw(sql,[rbs.rbs_id])
+        cabecera = ("CODIGO", "RIESGO", "CAUSAS", "EVENTO", "CONSECUENCIAS", "WBS")
+        registros = []
+        for riesgo in riesgos:
+            registros.append((
+                "R_"+str(riesgo.riesgo_id), riesgo.riesgo_nombre, riesgo.riesgo_causa, riesgo.riesgo_evento, riesgo.riesgo_efecto, "0.0.0"
+            ));
+        nombreEXCEL = "riesgos_aux"
+        reporte = reporteEXCEL(titulo, cabecera, registros, nombreEXCEL).Exportar()
+        """ur = 'C:\\Users\\DiegoCV\\Documents\\tesis\\tesis\\codigo\\ufps_risk_api\\app_risk_api\\modulos\\servicios_generales\\test.xlsx'
+        zip_file = open(ur, 'rb')
+        print(zip_file)
+        t = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response = HttpResponse(zip_file, content_type=t)
+        response['Content-Disposition'] = 'attachment; filename="%s"' % 'CDX_COMPOSITES_20140626.xlsx'"""
+
+        return response(status=status.HTTP_201_CREATED)
 
 """
 ////////////////////////////////////////////////////////////////////////////
